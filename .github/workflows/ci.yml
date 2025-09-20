@@ -28,6 +28,8 @@ jobs:
 
       - name: Determine version
         id: get_version
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           REPO="rndevelo/build-logic"
           PACKAGE_NAME="buildlogic"   # nombre de tu paquete en GitHub Packages
@@ -51,6 +53,7 @@ jobs:
 
           echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
           echo "Next version: $NEXT_VERSION"
+      
 
       - name: Publish to GitHub Packages
         env:
