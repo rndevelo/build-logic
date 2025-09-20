@@ -1,6 +1,7 @@
 plugins {
     `kotlin-dsl`
     id("com.gradle.plugin-publish") version "1.2.1"
+    `maven-publish`
 }
 
 group = "io.github.rndevelo.buildlogic"
@@ -10,6 +11,7 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))
     }
+    withSourcesJar()
 }
 
 dependencies {
@@ -57,6 +59,28 @@ gradlePlugin {
             displayName = "JVM Library Convention Plugin by rndev"
             description = "Configures a JVM (Kotlin/Java) library module."
             tags.set(listOf("kotlin", "jvm", "library", "convention"))
+        }
+    }
+}
+
+publishing {
+    publications {
+        // publica la componente java (incluye el jar principal y el marker plugin)
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            groupId = project.group.toString()
+            artifactId = "build-logic" // elige un artifactId claro
+            version = project.version.toString()
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/rndevelo/build-logic") // owner/repo del repo donde publicas el package
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("GITHUB_ACTOR")
+                password = project.findProperty("gpr.key") as String? ?: System.getenv("GITHUB_TOKEN")
+            }
         }
     }
 }
