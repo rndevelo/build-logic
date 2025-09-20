@@ -31,11 +31,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          REPO="rndevelo/build-logic"
           PACKAGE_NAME="buildlogic"   # nombre de tu paquete en GitHub Packages
+          USERNAME="rndevelo"         # tu usuario de GitHub
 
           # Obtener todas las versiones publicadas en GitHub Packages
-          VERSIONS=$(gh api repos/$REPO/packages/maven/$PACKAGE_NAME/versions --jq '.[].metadata.version')
+          VERSIONS=$(gh api users/$USERNAME/packages/maven/$PACKAGE_NAME/versions --jq '.[].metadata.version')
 
           if [ -z "$VERSIONS" ]; then
             NEXT_VERSION="1.0.0"
@@ -53,7 +53,6 @@ jobs:
 
           echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
           echo "Next version: $NEXT_VERSION"
-      
 
       - name: Publish to GitHub Packages
         env:
