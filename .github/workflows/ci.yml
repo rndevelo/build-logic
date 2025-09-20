@@ -26,23 +26,22 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Determine version
+      - name: Determine next version
         id: get_version
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          PACKAGE_NAME="buildlogic"   # nombre de tu paquete en GitHub Packages
-          USERNAME="rndevelo"         # tu usuario de GitHub
+          REPO="rndevelo/build-logic"
+          PACKAGE_NAME="build-logic"
 
-          # Obtener todas las versiones publicadas en GitHub Packages
-          VERSIONS=$(gh api users/$USERNAME/packages/maven/$PACKAGE_NAME/versions --jq '.[].metadata.version')
+          # Obtener todas las versiones publicadas
+          VERSIONS=$(gh api repos/$REPO/packages/maven/$PACKAGE_NAME/versions --jq '.[].metadata.version' 2>/dev/null || echo "")
 
           if [ -z "$VERSIONS" ]; then
             NEXT_VERSION="1.0.0"
           else
-            MAX=$(echo "$VERSIONS" | sort -V | tail -n 1)
+            MAX=$(echo "$VERSIONS" | sort -V | tail -n1)
             IFS='.' read -r MAJOR MINOR PATCH <<< "$MAX"
-
             PATCH=$((PATCH+1))
             if [ $PATCH -ge 10 ]; then
               PATCH=0
