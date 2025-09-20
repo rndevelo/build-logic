@@ -11,6 +11,11 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Permisos necesarios para que gh api pueda leer información de paquetes
+    # y para que el paso de ./gradlew publish pueda escribir en GitHub Packages
+    permissions:
+      contents: read
+      packages: write # Necesario para publicar, y GITHUB_TOKEN lo usará para leer versiones también
 
     steps:
       - name: Checkout repository
@@ -29,34 +34,59 @@ jobs:
       - name: Determine next version
         id: get_version
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          # GITHUB_TOKEN tiene permisos para leer paquetes si permissions.packages: read (o write) está definido a nivel de job
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          REPO="rndevelo/build-logic"
+          REPO="${{ github.repository }}" # Usa el repositorio actual
+          # Asegúrate de que PACKAGE_NAME coincida con cómo se nombran tus paquetes en GitHub Packages.
+          # A menudo es el nombre del artefacto o del proyecto.
+          PACKAGE_NAME="build-logic" 
 
-          # Listar todos los paquetes Maven del repo y sacar sus versiones
-          VERSIONS=$(gh api repos/$REPO/packages \
-            --jq '.[] | select(.package_type=="maven") | .name' | while read pkg; do
-              gh api repos/$REPO/packages/maven/$pkg/versions --jq '.[].metadata.version' || true
-            done)
-
-          if [ -z "$VERSIONS" ]; then
+          echo "Fetching versions for package '$PACKAGE_NAME' in repo '$REPO'..."
+          
+          # Obtener todas las versiones publicadas
+          # Usamos comillas dobles para las variables y especificamos la API de forma más robusta
+          VERSIONS_JSON=$(gh api "repos/$REPO/packages/maven/$PACKAGE_NAME/versions" --jq '.[].name' 2>/dev/null)
+          
+          if [ -z "$VERSIONS_JSON" ]; then
+            echo "No existing versions found. Starting with 1.0.0."
             NEXT_VERSION="1.0.0"
           else
-            MAX=$(echo "$VERSIONS" | sort -V | tail -n1)
-            IFS='.' read -r MAJOR MINOR PATCH <<< "$MAX"
-            PATCH=$((PATCH+1))
-            if [ $PATCH -ge 10 ]; then
-              PATCH=0
-              MINOR=$((MINOR+1))
+            # Filtrar solo versiones que sigan el patrón X.Y.Z, ordenarlas y tomar la última
+            MAX=$(echo "$VERSIONS_JSON" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
+          
+            if [ -z "$MAX" ]; then
+              echo "No valid X.Y.Z versions found among existing versions. Starting with 1.0.0."
+              echo "Existing versions found: $VERSIONS_JSON"
+              NEXT_VERSION="1.0.0"
+            else
+              echo "Last published version: $MAX"
+              IFS='.' read -r MAJOR MINOR PATCH <<< "$MAX"
+          
+              # Incrementar PATCH
+              PATCH=$((PATCH + 1))
+          
+              if [ "$PATCH" -ge 10 ]; then
+                PATCH=0
+                MINOR=$((MINOR + 1))
+          
+                if [ "$MINOR" -ge 10 ]; then
+                  MINOR=0
+                  MAJOR=$((MAJOR + 1))
+                fi
+              fi
+              NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}"
             fi
-            NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}"
           fi
 
-          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT" # Buena práctica usar comillas
           echo "Next version: $NEXT_VERSION"
 
       - name: Publish to GitHub Packages
         env:
+          # Estos son los secretos que tu ./gradlew publish usa.
+          # Asegúrate de que estén configurados en los secretos de tu repositorio GitHub.
           GPR_USER: ${{ secrets.GPR_USER }}
           GPR_KEY:  ${{ secrets.GPR_KEY }}
         run: ./gradlew publish -Pversion=${{ steps.get_version.outputs.version }} --no-daemon --stacktrace
+
