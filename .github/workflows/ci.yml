@@ -44,7 +44,6 @@ jobs:
           GPR_KEY:  ${{ secrets.GPR_KEY }}
         run: ./gradlew publish -Pversion=${{ steps.get_version.outputs.version }} --no-daemon --stacktrace
 
-
       # --- Opcional: publicar en Gradle Plugin Portal ---
       # - name: Publish to Gradle Plugin Portal
       #   env:
