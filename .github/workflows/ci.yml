@@ -7,8 +7,6 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-  # También se puede disparar con un tag:
-
 
 jobs:
   publish:
@@ -31,22 +29,31 @@ jobs:
       - name: Determine version
         id: get_version
         run: |
-          # Usamos el tag si existe, si no fallback a "1.0.2"
-          if [[ -n "${GITHUB_REF_NAME}" && "${GITHUB_REF_NAME}" == v* ]]; then
-            echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+          REPO="rndevelo/build-logic"
+          PACKAGE_NAME="buildlogic"   # nombre de tu paquete en GitHub Packages
+
+          # Obtener todas las versiones publicadas en GitHub Packages
+          VERSIONS=$(gh api repos/$REPO/packages/maven/$PACKAGE_NAME/versions --jq '.[].metadata.version')
+
+          if [ -z "$VERSIONS" ]; then
+            NEXT_VERSION="1.0.0"
           else
-            echo "version=1.0.2" >> $GITHUB_OUTPUT
+            MAX=$(echo "$VERSIONS" | sort -V | tail -n 1)
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$MAX"
+
+            PATCH=$((PATCH+1))
+            if [ $PATCH -ge 10 ]; then
+              PATCH=0
+              MINOR=$((MINOR+1))
+            fi
+            NEXT_VERSION="${MAJOR}.${MINOR}.${PATCH}"
           fi
+
+          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "Next version: $NEXT_VERSION"
 
       - name: Publish to GitHub Packages
         env:
           GPR_USER: ${{ secrets.GPR_USER }}
           GPR_KEY:  ${{ secrets.GPR_KEY }}
         run: ./gradlew publish -Pversion=${{ steps.get_version.outputs.version }} --no-daemon --stacktrace
-
-      # --- Opcional: publicar en Gradle Plugin Portal ---
-      # - name: Publish to Gradle Plugin Portal
-      #   env:
-      #     GRADLE_PUBLISH_KEY:    ${{ secrets.GRADLE_PUBLISH_KEY }}
-      #     GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
-      #   run: ./gradlew publishPlugins --no-daemon --stacktrace
