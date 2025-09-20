@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.rndevelo.buildlogic"
-version = (findProperty("version") as String?) ?: "1.0.0"
+version = (findProperty("version") as String?) ?: "1.0.1"
 
 java {
     toolchain {
