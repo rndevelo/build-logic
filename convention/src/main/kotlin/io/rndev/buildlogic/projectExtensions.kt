@@ -1,4 +1,4 @@
-package io.rndev.simulatorbank
+package io.rndev.buildlogic
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.VersionCatalog

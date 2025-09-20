@@ -1,4 +1,4 @@
-import io.rndev.simulatorbank.configureKotlinJvm
+import io.rndev.buildlogic.configureKotlinJvm
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 

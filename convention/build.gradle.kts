@@ -53,6 +53,29 @@ gradlePlugin {
             description = "Sets up an Android library module with Jetpack Compose."
             tags.set(listOf("android", "library", "compose", "convention"))
         }
+        register("androidFeature") {
+            id = "io.github.rndevelo.buildlogic.android.feature"
+            implementationClass = "AndroidFeatureConventionPlugin"
+            displayName = "Android Feature Convention Plugin by rndev"
+            description = "Sets up a feature module following Android best practices."
+            tags.set(listOf("android", "feature", "convention", "module"))
+        }
+
+        register("diLibrary") {
+            id = "io.github.rndevelo.buildlogic.di.library"
+            implementationClass = "DiLibraryConventionPlugin"
+            displayName = "DI Library Convention Plugin by rndev"
+            description = "Configures a library module with Dependency Injection setup."
+            tags.set(listOf("di", "library", "kotlin", "convention"))
+        }
+
+        register("diLibraryCompose") {
+            id = "io.github.rndevelo.buildlogic.di.library.compose"
+            implementationClass = "DiLibraryComposeConventionPlugin"
+            displayName = "DI Library Compose Convention Plugin by rndev"
+            description = "Configures a library module with DI setup and Jetpack Compose support."
+            tags.set(listOf("di", "library", "compose", "kotlin", "convention"))
+        }
         register("jvmLibrary") {
             id = "io.github.rndevelo.buildlogic.jvm.library"
             implementationClass = "JvmLibraryConventionPlugin"
