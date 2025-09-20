@@ -26,35 +26,35 @@ gradlePlugin {
 
     plugins {
         register("androidApplication") {
-            id = "android.application"
+            id = "io.github.rndevelo.buildlogic.android.application"
             implementationClass = "AndroidApplicationConventionPlugin"
             displayName = "Android Application Convention Plugin by rndev"
             description = "Sets up a typical Android application module with common configurations."
             tags.set(listOf("android", "application", "convention"))
         }
         register("androidApplicationCompose") {
-            id = "android.application.compose"
+            id = "io.github.rndevelo.buildlogic.android.application.compose"
             implementationClass = "AndroidApplicationComposeConventionPlugin"
             displayName = "Android Application Compose Convention Plugin by rndev"
             description = "Sets up an Android application module with Jetpack Compose."
             tags.set(listOf("android", "compose", "application", "convention"))
         }
         register("androidLibrary") {
-            id = "android.library"
+            id = "io.github.rndevelo.buildlogic.android.library"
             implementationClass = "AndroidLibraryConventionPlugin"
             displayName = "Android Library Convention Plugin by rndev"
             description = "Sets up an Android library module."
             tags.set(listOf("android", "library", "convention"))
         }
         register("androidLibraryCompose") {
-            id = "android.library.compose"
+            id = "io.github.rndevelo.buildlogic.android.library.compose"
             implementationClass = "AndroidLibraryComposeConventionPlugin"
             displayName = "Android Library Compose Convention Plugin by rndev"
             description = "Sets up an Android library module with Jetpack Compose."
             tags.set(listOf("android", "library", "compose", "convention"))
         }
         register("jvmLibrary") {
-            id = "jvm.library"
+            id = "io.github.rndevelo.buildlogic.jvm.library"
             implementationClass = "JvmLibraryConventionPlugin"
             displayName = "JVM Library Convention Plugin by rndev"
             description = "Configures a JVM (Kotlin/Java) library module."
