@@ -5,7 +5,8 @@ plugins {
 }
 
 group = "io.github.rndevelo.buildlogic"
-version = "1.0.2"
+// ✅ Usamos la propiedad -Pversion si existe, si no fallback a "unspecified"
+version = (findProperty("version") as String?) ?: "1.0.2"
 
 java {
     toolchain {

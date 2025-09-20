@@ -1,16 +1,21 @@
-name: Publish to GitHub Packages
+name: Publish Build Logic
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
+    tags:
+      - 'v*'
   workflow_dispatch:
+  # También se puede disparar con un tag:
+
 
 jobs:
   publish:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 11
@@ -23,13 +28,24 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
+      - name: Determine version
+        id: get_version
+        run: |
+          # Usamos el tag si existe, si no fallback a "1.0.2"
+          if [[ -n "${GITHUB_REF_NAME}" && "${GITHUB_REF_NAME}" == v* ]]; then
+            echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+          else
+            echo "version=1.0.2" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish to GitHub Packages
         env:
-          GPR_USER: ${{ secrets.GPR_USER }}        # tu usuario GitHub
-          GPR_KEY:  ${{ secrets.GPR_KEY }}         # PAT con permisos write:packages
-        run: ./gradlew publish --no-daemon --stacktrace
+          GPR_USER: ${{ secrets.GPR_USER }}
+          GPR_KEY:  ${{ secrets.GPR_KEY }}
+        run: ./gradlew publish -Pversion=${{ steps.get_version.outputs.version }} --no-daemon --stacktrace
 
-      # --- OPCIONAL: publicar también en Gradle Plugin Portal (requiere claves)
+
+      # --- Opcional: publicar en Gradle Plugin Portal ---
       # - name: Publish to Gradle Plugin Portal
       #   env:
       #     GRADLE_PUBLISH_KEY:    ${{ secrets.GRADLE_PUBLISH_KEY }}
