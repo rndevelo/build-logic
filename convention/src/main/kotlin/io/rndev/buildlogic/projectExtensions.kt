@@ -19,7 +19,6 @@ fun Project.addUnitTestDependencies() {
 
 fun Project.addAndroidTestDependencies() {
     dependencies {
-        add("androidTestImplementation", project(":test:unit"))
         add("androidTestImplementation", platform(libs.findLibrary("androidx.compose.bom").get()))
         add("androidTestImplementation", libs.findLibrary("androidx.junit").get())
         add("androidTestImplementation", libs.findLibrary("androidx.espresso.core").get())
