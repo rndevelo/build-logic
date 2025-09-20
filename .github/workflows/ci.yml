@@ -37,30 +37,42 @@ jobs:
           # GITHUB_TOKEN tiene permisos para leer paquetes si permissions.packages: read (o write) está definido a nivel de job
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -x # Imprime los comandos para depuración
+
           REPO="${{ github.repository }}" # Usa el repositorio actual
-          # Asegúrate de que PACKAGE_NAME coincida con cómo se nombran tus paquetes en GitHub Packages.
-          # A menudo es el nombre del artefacto o del proyecto.
-          PACKAGE_NAME="build-logic" 
+          # Corregir PACKAGE_NAME para que coincida con el nombre completo en GitHub Packages
+          # Este es group.artifactId
+          PACKAGE_NAME="io.github.rndevelo.buildlogic.build-logic" 
 
           echo "Fetching versions for package '$PACKAGE_NAME' in repo '$REPO'..."
           
           # Obtener todas las versiones publicadas
-          # Usamos comillas dobles para las variables y especificamos la API de forma más robusta
-          VERSIONS_JSON=$(gh api "repos/$REPO/packages/maven/$PACKAGE_NAME/versions" --jq '.[].name' 2>/dev/null)
+          # Eliminamos 2>/dev/null temporalmente para ver errores y capturamos el código de salida
+          VERSIONS_JSON=$(gh api "repos/$REPO/packages/maven/$PACKAGE_NAME/versions" --jq '.[].name')
+          GH_API_EXIT_CODE=$?
+
+          if [ $GH_API_EXIT_CODE -ne 0 ]; then
+            echo "Error: 'gh api' command failed with exit code $GH_API_EXIT_CODE."
+            # Intentar obtener de nuevo la salida para ver el mensaje de error de la API
+            echo "Attempting to get error output from 'gh api':"
+            gh api "repos/$REPO/packages/maven/$PACKAGE_NAME/versions" || true 
+            exit 1 # Fallar el paso explícitamente
+          fi
           
           if [ -z "$VERSIONS_JSON" ]; then
-            echo "No existing versions found. Starting with 1.0.0."
+            echo "No existing versions found (or 'gh api' returned empty). Starting with 1.0.0."
             NEXT_VERSION="1.0.0"
           else
+            echo "Raw versions JSON from gh api: $VERSIONS_JSON" # Para depurar qué versiones se obtienen
             # Filtrar solo versiones que sigan el patrón X.Y.Z, ordenarlas y tomar la última
             MAX=$(echo "$VERSIONS_JSON" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
           
             if [ -z "$MAX" ]; then
               echo "No valid X.Y.Z versions found among existing versions. Starting with 1.0.0."
-              echo "Existing versions found: $VERSIONS_JSON"
+              echo "Existing versions found (after potential filtering by jq): $VERSIONS_JSON"
               NEXT_VERSION="1.0.0"
             else
-              echo "Last published version: $MAX"
+              echo "Last published X.Y.Z version: $MAX"
               IFS='.' read -r MAJOR MINOR PATCH <<< "$MAX"
           
               # Incrementar PATCH
@@ -89,4 +101,3 @@ jobs:
           GPR_USER: ${{ secrets.GPR_USER }}
           GPR_KEY:  ${{ secrets.GPR_KEY }}
         run: ./gradlew publish -Pversion=${{ steps.get_version.outputs.version }} --no-daemon --stacktrace
-
