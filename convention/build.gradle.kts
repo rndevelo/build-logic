@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "io.github.rndevelo.buildlogic"
-version = "1.0.0"
+version = "1.0.2"
 
 java {
     toolchain {
