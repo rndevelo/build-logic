@@ -5,8 +5,6 @@ plugins {
 }
 
 group = "io.github.rndevelo.buildlogic"
-
-// ⚡ Ahora siempre usará la versión pasada por -Pversion (workflow)
 version = providers.gradleProperty("version").orElse("1.0.0-SNAPSHOT").get()
 
 java {
