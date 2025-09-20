@@ -11,11 +11,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Permisos necesarios para que gh api pueda leer información de paquetes
-    # y para que el paso de ./gradlew publish pueda escribir en GitHub Packages
     permissions:
       contents: read
-      packages: write # Necesario para publicar, y GITHUB_TOKEN lo usará para leer versiones también
+      packages: write
 
     steps:
       - name: Checkout repository
@@ -34,28 +32,30 @@ jobs:
       - name: Determine next version
         id: get_version
         env:
-          # GITHUB_TOKEN tiene permisos para leer paquetes si permissions.packages: read (o write) está definido a nivel de job
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -x # Imprime los comandos para depuración
 
-          REPO="${{ github.repository }}" # Usa el repositorio actual
-          # Corregir PACKAGE_NAME para que coincida con el nombre completo en GitHub Packages
-          # Este es group.artifactId
-          PACKAGE_NAME="io.github.rndevelo.buildlogic.build-logic" 
-
-          echo "Fetching versions for package '$PACKAGE_NAME' in repo '$REPO'..."
+          REPO="${{ github.repository }}" # Formato: owner/repo_name
+          OWNER=$(echo "$REPO" | cut -d'/' -f1) # Extrae el owner
           
-          # Obtener todas las versiones publicadas
-          # Eliminamos 2>/dev/null temporalmente para ver errores y capturamos el código de salida
-          VERSIONS_JSON=$(gh api "repos/$REPO/packages/maven/$PACKAGE_NAME/versions" --jq '.[].name')
+          # PACKAGE_NAME es groupId.artifactId
+          PACKAGE_NAME="io.github.rndevelo.buildlogic.build-logic"
+
+          echo "Fetching versions for package '$PACKAGE_NAME' for user '$OWNER'..."
+          
+          # Usar el endpoint /users/{username}/packages/... 
+          VERSIONS_JSON=$(gh api "users/$OWNER/packages/maven/$PACKAGE_NAME/versions" --jq '.[].name')
           GH_API_EXIT_CODE=$?
 
           if [ $GH_API_EXIT_CODE -ne 0 ]; then
             echo "Error: 'gh api' command failed with exit code $GH_API_EXIT_CODE."
-            # Intentar obtener de nuevo la salida para ver el mensaje de error de la API
-            echo "Attempting to get error output from 'gh api':"
-            gh api "repos/$REPO/packages/maven/$PACKAGE_NAME/versions" || true 
+            echo "Attempting to get error output from 'gh api' (users endpoint):"
+            gh api "users/$OWNER/packages/maven/$PACKAGE_NAME/versions" || true 
+            
+            # Como fallback, intentar el endpoint /repos/{owner}/{repo}/packages/... que funcionó una vez
+            echo "Attempting fallback to 'gh api' (repos endpoint):"
+            gh api "repos/$REPO/packages/maven/$PACKAGE_NAME/versions" || true
             exit 1 # Fallar el paso explícitamente
           fi
           
@@ -63,8 +63,7 @@ jobs:
             echo "No existing versions found (or 'gh api' returned empty). Starting with 1.0.0."
             NEXT_VERSION="1.0.0"
           else
-            echo "Raw versions JSON from gh api: $VERSIONS_JSON" # Para depurar qué versiones se obtienen
-            # Filtrar solo versiones que sigan el patrón X.Y.Z, ordenarlas y tomar la última
+            echo "Raw versions JSON from gh api: $VERSIONS_JSON"
             MAX=$(echo "$VERSIONS_JSON" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1)
           
             if [ -z "$MAX" ]; then
@@ -75,13 +74,10 @@ jobs:
               echo "Last published X.Y.Z version: $MAX"
               IFS='.' read -r MAJOR MINOR PATCH <<< "$MAX"
           
-              # Incrementar PATCH
               PATCH=$((PATCH + 1))
-          
               if [ "$PATCH" -ge 10 ]; then
                 PATCH=0
                 MINOR=$((MINOR + 1))
-          
                 if [ "$MINOR" -ge 10 ]; then
                   MINOR=0
                   MAJOR=$((MAJOR + 1))
@@ -91,13 +87,11 @@ jobs:
             fi
           fi
 
-          echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT" # Buena práctica usar comillas
+          echo "version=$NEXT_VERSION" >> "$GITHUB_OUTPUT"
           echo "Next version: $NEXT_VERSION"
 
       - name: Publish to GitHub Packages
         env:
-          # Estos son los secretos que tu ./gradlew publish usa.
-          # Asegúrate de que estén configurados en los secretos de tu repositorio GitHub.
           GPR_USER: ${{ secrets.GPR_USER }}
           GPR_KEY:  ${{ secrets.GPR_KEY }}
         run: ./gradlew publish -Pversion=${{ steps.get_version.outputs.version }} --no-daemon --stacktrace
