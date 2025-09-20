@@ -6,7 +6,7 @@ class DiLibraryComposeConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             with(pluginManager) {
-                apply("rndev.di.library")
+                apply("io.github.rndevelo.buildlogic.di.library")
                 apply("dagger.hilt.android.plugin")
             }
 

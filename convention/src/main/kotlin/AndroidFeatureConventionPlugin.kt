@@ -10,7 +10,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
             pluginManager.apply {
-                apply("rndev.android.library.compose")
+                apply("io.github.rndevelo.buildlogic.android.library.compose")
             }
 
             extensions.configure<LibraryExtension> {
