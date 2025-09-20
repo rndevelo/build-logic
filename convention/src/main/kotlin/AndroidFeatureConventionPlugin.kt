@@ -20,15 +20,10 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             }
 
             dependencies {
-                add("implementation", project(":feature:core"))
                 add(
                     "implementation",
                     libs.findLibrary("androidx.lifecycle.viewmodel.compose").get()
                 )
-                //    Ccp for country number prefix
-                add("implementation", libs.findLibrary("ccp").get())
-
-                add("testImplementation", project(":test:unit"))
                 add("testImplementation", libs.findLibrary("kotlinx.coroutines.test").get())
                 add("testImplementation", libs.findLibrary("turbine").get())
             }
