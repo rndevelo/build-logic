@@ -5,7 +5,9 @@ plugins {
 }
 
 group = "io.github.rndevelo.buildlogic"
-version = (findProperty("version") as String?) ?: "1.0.1"
+
+// ⚡ Ahora siempre usará la versión pasada por -Pversion (workflow)
+version = providers.gradleProperty("version").orElse("1.0.0-SNAPSHOT").get()
 
 java {
     toolchain {
@@ -21,8 +23,8 @@ dependencies {
 }
 
 gradlePlugin {
-    website.set("https://github.com/rndevelo/android-build-logic")
-    vcsUrl.set("https://github.com/rndevelo/android-build-logic")
+    website.set("https://github.com/rndevelo/build-logic")
+    vcsUrl.set("https://github.com/rndevelo/build-logic")
 
     plugins {
         register("androidApplication") {
@@ -60,7 +62,6 @@ gradlePlugin {
             description = "Sets up a feature module following Android best practices."
             tags.set(listOf("android", "feature", "convention", "module"))
         }
-
         register("diLibrary") {
             id = "io.github.rndevelo.buildlogic.di.library"
             implementationClass = "DiLibraryConventionPlugin"
@@ -68,7 +69,6 @@ gradlePlugin {
             description = "Configures a library module with Dependency Injection setup."
             tags.set(listOf("di", "library", "kotlin", "convention"))
         }
-
         register("diLibraryCompose") {
             id = "io.github.rndevelo.buildlogic.di.library.compose"
             implementationClass = "DiLibraryComposeConventionPlugin"
