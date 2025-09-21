@@ -9,9 +9,11 @@ class DiLibraryComposeConventionPlugin : Plugin<Project> {
                 apply("io.github.rndevelo.buildlogic.di.library")
                 apply("dagger.hilt.android.plugin")
             }
-
             dependencies.add("implementation", libs.findLibrary("hilt.android").get())
-            dependencies.add("implementation", libs.findLibrary("androidx.hilt.navigation.compose").get())
+            dependencies.add(
+                "implementation",
+                libs.findLibrary("androidx.hilt.navigation.compose").get()
+            )
         }
     }
 }
