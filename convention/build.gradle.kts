@@ -96,7 +96,6 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifact(tasks["sourcesJar"])
             groupId = project.group.toString()
             artifactId = "build-logic"
             version = project.version.toString()
