@@ -1,5 +1,6 @@
 plugins {
     `kotlin-dsl`
+    `java-gradle-plugin`
     id("com.gradle.plugin-publish") version "1.2.1"
     `maven-publish`
 }
@@ -81,6 +82,13 @@ gradlePlugin {
             description = "Configures a JVM (Kotlin/Java) library module."
             tags.set(listOf("kotlin", "jvm", "library", "convention"))
         }
+        register("jvmRetrofit") {
+            id = "io.github.rndevelo.buildlogic.jvm.retrofit"
+            implementationClass = "JvmRetrofitConventionPlugin"
+            displayName = "JVM Retrofit Convention Plugin by rndev"
+            description = "Configures a JVM (Kotlin) library module with Retrofit client setup."
+            tags.set(listOf("kotlin", "jvm", "library", "retrofit", "convention"))
+        }
     }
 }
 
@@ -88,8 +96,9 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
+            artifact(tasks["sourcesJar"])
             groupId = project.group.toString()
-            artifactId = "build-logic" // nombre simple del artifact
+            artifactId = "build-logic"
             version = project.version.toString()
         }
     }
