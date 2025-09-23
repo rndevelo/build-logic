@@ -94,4 +94,4 @@ jobs:
         env:
           GPR_USER: ${{ secrets.GPR_USER }}
           GPR_KEY:  ${{ secrets.GPR_KEY }}
-        run: ./gradlew publish -Pversion=1.0.5 --no-daemon --stacktrace
+        run: ./gradlew publish -Pversion=${{ steps.get_version.outputs.version }} --no-daemon --stacktrace

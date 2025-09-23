@@ -10,6 +10,7 @@ class JvmRetrofitConventionPlugin : Plugin<Project> {
 
             dependencies {
                 add("implementation", libs.findLibrary("okhttp").get())
+                add("implementation", libs.findLibrary("logging-interceptor").get())
                 add("implementation", libs.findLibrary("retrofit").get())
                 add("implementation", libs.findLibrary("retrofit-converter-kotlinx-serialization").get())
                 add("implementation", libs.findLibrary("kotlinx.serialization.json").get())
